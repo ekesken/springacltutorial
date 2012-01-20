@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+             http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+             http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd">
+
+	<security:authentication-manager>
+		<security:authentication-provider>
+			<security:password-encoder hash="plaintext" />
+			<security:user-service>
+				<security:user name="empl1" password="pass1"
+					authorities="ROLE_EMPLOYEE" />
+				<security:user name="empl2" password="pass2"
+					authorities="ROLE_EMPLOYEE" />
+				<security:user name="empl3" password="pass3"
+					authorities="ROLE_EMPLOYEE" />
+				<security:user name="empl4" password="pass4"
+					authorities="ROLE_EMPLOYEE" />
+				<security:user name="manager1" password="pass1"
+					authorities="ROLE_MANAGER" />
+				<security:user name="manager2" password="pass2"
+					authorities="ROLE_MANAGER" />
+				<security:user name="testUser" password=""
+					authorities="" />
+			</security:user-service>
+		</security:authentication-provider>
+	</security:authentication-manager>
+
+	<security:global-method-security
+		secured-annotations="enabled" access-decision-manager-ref="businessAccessDecisionManager" />
+
+	<!-- Decision manager uses two voters: one is role-based, another is ACL-based -->
+	<bean id="businessAccessDecisionManager" class="org.springframework.security.access.vote.UnanimousBased">
+		<property name="allowIfAllAbstainDecisions" value="true" />
+		<property name="decisionVoters">
+			<list>
+				<bean id="roleVoter" class="org.springframework.security.access.vote.RoleVoter" />
+				<ref local="aclReportAcceptVoter" />
+			</list>
+		</property>
+	</bean>
+
+	<!-- An access decision voter that reads ACL_REPORT_ACCEPT configuration 
+		settings -->
+	<bean id="aclReportAcceptVoter" class="org.springframework.security.acls.AclEntryVoter">
+		<constructor-arg ref="aclService" />
+		<constructor-arg value="ACL_REPORT_ACCEPT" />
+		<constructor-arg>
+			<list>
+				<util:constant id="acceptPermission"
+					static-field="springacltutorial.infrastructure.ExtendedPermission.ACCEPT" />
+			</list>
+		</constructor-arg>
+		<property name="internalMethod" value="getUser" />
+		<property name="objectIdentityRetrievalStrategy">
+			<bean class="springacltutorial.infrastructure.UserNameRetrievalStrategy" />
+		</property>
+		<!-- this is tricky! We have to use Report here, so that voter find it 
+			in protected method parameters; "internalMethod" will convert it to User -->
+		<property name="processDomainObjectClass" value="springacltutorial.model.Report" />
+	</bean>
+
+	<bean id="aclService" class="springacltutorial.infrastructure.InMemoryAclServiceImpl" />
+
+</beans>
