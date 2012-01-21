@@ -1,10 +1,14 @@
 package springacltutorial.services;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PostFilter;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import springacltutorial.dao.ReportsDao;
@@ -40,8 +44,16 @@ public class ReportServices {
 	// of user linked to the report
 	@Secured({ "ROLE_MANAGER", "ACL_REPORT_ACCEPT" })
 	public void acceptReport(Report report) {
-
 		report.setAccepted(true);
 	}
 
+	@PostFilter("hasPermission(filterObject, 'read')")
+	public List<Report> getReports() {
+		return dao.getReports();
+	}
+
+	@PreAuthorize("#report.user.login == authentication.name")
+	public void updateReport(Report report) {
+		// throws exception if not authorized
+	}
 }

@@ -1,7 +1,11 @@
 package springacltutorial.services;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+
+import java.util.Collection;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -9,9 +13,9 @@ import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import springacltutorial.dao.ReportsDao;
 import springacltutorial.model.Report;
@@ -85,5 +89,73 @@ public class ServicesAuthorizationTest {
 				new UsernamePasswordAuthenticationToken("manager2", "pass2"));
 		reportServices.acceptReport(reportEmpl3);
 		assertEquals(true, reportEmpl3.isAccepted());
+
+		Collection<Report> reports = reportServices.getReports();
+		assertNotNull(reports);
+		assertEquals(1, reports.size());
+	}
+
+	@Test
+	public void testGetReports() {
+		// empl1 creates report
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("empl1", "pass1"));
+		Report reportEmpl1 = dao.getReportById(reportServices
+				.addReport("springacltutorial"));
+
+		// empl3 creates report
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("empl3", "pass3"));
+		Report reportEmpl3 = dao.getReportById(reportServices
+				.addReport("springacltutorial"));
+
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("manager1", "pass1"));
+		List<Report> reports = reportServices.getReports();
+		assertNotNull(reports);
+		assertEquals(1, reports.size());
+		assertEquals(reportEmpl1, reports.get(0));
+
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("manager2", "pass2"));
+		reports = reportServices.getReports();
+		assertNotNull(reports);
+		assertEquals(1, reports.size());
+		assertEquals(reportEmpl3, reports.get(0));
+	}
+
+	@Test
+	public void testUpdateReport() {
+		// empl1 creates report
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("empl1", "pass1"));
+		Report reportEmpl1 = dao.getReportById(reportServices
+				.addReport("springacltutorial"));
+
+		reportServices.updateReport(reportEmpl1); // verifies no exception is thrown
+
+		// empl3 creates report
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("empl3", "pass3"));
+		Report reportEmpl3 = dao.getReportById(reportServices
+				.addReport("springacltutorial"));
+
+		reportServices.updateReport(reportEmpl3); // verifies no exception is thrown
+		try {
+			reportServices.updateReport(reportEmpl1);
+			fail("access denied exception is expected");
+		} catch (Exception e) {
+			assertEquals(e.getClass(), AccessDeniedException.class);
+		}
+
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("empl1", "pass1"));
+		reportServices.updateReport(reportEmpl1); // verifies no exception is thrown
+		try {
+			reportServices.updateReport(reportEmpl3);
+			fail("access denied exception is expected");
+		} catch (Exception e) {
+			assertEquals(e.getClass(), AccessDeniedException.class);
+		}
 	}
 }

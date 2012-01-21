@@ -1,5 +1,7 @@
 package springacltutorial.services;
 
+import java.util.Collection;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.BeanFactoryUtils;
@@ -7,6 +9,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import springacltutorial.dao.ReportsDao;
+import springacltutorial.model.Report;
 
 import static org.junit.Assert.*;
 
@@ -40,4 +43,20 @@ public class ServicesTest {
 		assertEquals(true, dao.getReportById(id).isAccepted());
 	}
 
+	@Test
+	public void testGetReports() {
+		reportServices.addReport("springacltutorial");
+		reportServices.addReport("springacltutorial2");
+		reportServices.addReport("springacltutorial3");
+		Collection<Report> reports = reportServices.getReports();
+		assertNotNull(reports);
+		assertEquals(3, reports.size());
+	}
+
+	@Test
+	public void testUpdateReport() {
+		long id = reportServices.addReport("springacltutorial");
+		Report report = dao.getReportById(id);
+		reportServices.updateReport(report); // verifies no authorization exception is throwed
+	}
 }

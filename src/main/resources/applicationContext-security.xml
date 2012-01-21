@@ -30,7 +30,11 @@
 	</security:authentication-manager>
 
 	<security:global-method-security
-		secured-annotations="enabled" access-decision-manager-ref="businessAccessDecisionManager" />
+		secured-annotations="enabled"
+		pre-post-annotations="enabled"
+		access-decision-manager-ref="businessAccessDecisionManager">
+		<security:expression-handler ref="methodExprHandler" />
+	</security:global-method-security>
 
 	<!-- Decision manager uses two voters: one is role-based, another is ACL-based -->
 	<bean id="businessAccessDecisionManager" class="org.springframework.security.access.vote.UnanimousBased">
@@ -38,9 +42,16 @@
 		<property name="decisionVoters">
 			<list>
 				<bean id="roleVoter" class="org.springframework.security.access.vote.RoleVoter" />
+				<bean id="preAuthorizeVoter" class="org.springframework.security.access.prepost.PreInvocationAuthorizationAdviceVoter">
+					<constructor-arg ref="preInvocationAuthorizationAdvice"/>
+				</bean>
 				<ref local="aclReportAcceptVoter" />
 			</list>
 		</property>
+	</bean>
+
+	<bean id="preInvocationAuthorizationAdvice"
+		class="org.springframework.security.access.expression.method.ExpressionBasedPreInvocationAdvice">
 	</bean>
 
 	<!-- An access decision voter that reads ACL_REPORT_ACCEPT configuration 
@@ -65,4 +76,11 @@
 
 	<bean id="aclService" class="springacltutorial.infrastructure.InMemoryAclServiceImpl" />
 
+	<bean class="org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler" id="methodExprHandler">
+		<property name="permissionEvaluator" ref="aclPermissionEvaluator" />
+	</bean>
+
+	<bean class="org.springframework.security.acls.AclPermissionEvaluator" id="aclPermissionEvaluator">
+		<constructor-arg ref="aclService" />
+	</bean>
 </beans>

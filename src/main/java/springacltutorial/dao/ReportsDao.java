@@ -1,6 +1,8 @@
 package springacltutorial.dao;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Repository;
@@ -24,4 +26,8 @@ public class ReportsDao {
 		return reports.get(reportId);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<Report> getReports() {
+		return new ArrayList(reports.values());
+	}
 }

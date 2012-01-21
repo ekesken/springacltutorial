@@ -13,12 +13,14 @@ import org.springframework.security.acls.model.AclService;
 import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.acls.domain.AccessControlEntryImpl;
 import org.springframework.security.acls.model.ObjectIdentity;
+import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.security.acls.domain.ObjectIdentityImpl;
 import org.springframework.security.acls.domain.PrincipalSid;
 import org.springframework.security.acls.model.Sid;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import springacltutorial.model.Report;
 import springacltutorial.model.User;
 
 /**
@@ -38,6 +40,8 @@ public class InMemoryAclServiceImpl implements AclService {
 		ObjectIdentity user2 = new ObjectIdentityImpl(User.class, "empl2");
 		ObjectIdentity user3 = new ObjectIdentityImpl(User.class, "empl3");
 		ObjectIdentity user4 = new ObjectIdentityImpl(User.class, "empl4");
+		ObjectIdentity report1 = new ObjectIdentityImpl(Report.class, 1);
+		ObjectIdentity report2 = new ObjectIdentityImpl(Report.class, 2);
 
 		Acl acl1 = new SimpleAclImpl(user1, new ArrayList<AccessControlEntry>());
 		acl1.getEntries().add(
@@ -63,6 +67,18 @@ public class InMemoryAclServiceImpl implements AclService {
 						"manager2"), ExtendedPermission.ACCEPT, true, true,
 						true));
 		acls.put(acl4.getObjectIdentity(), acl4);
+		Acl acl5 = new SimpleAclImpl(report1, new ArrayList<AccessControlEntry>());
+		acl5.getEntries().add(
+				new AccessControlEntryImpl("ace5", acl5, new PrincipalSid(
+						"manager1"), BasePermission.READ, true, true,
+						true));
+		acls.put(acl5.getObjectIdentity(), acl5);
+		Acl acl6 = new SimpleAclImpl(report2, new ArrayList<AccessControlEntry>());
+		acl6.getEntries().add(
+				new AccessControlEntryImpl("ace6", acl6, new PrincipalSid(
+						"manager2"), BasePermission.READ, true, true,
+						true));
+		acls.put(acl6.getObjectIdentity(), acl6);
 	}
 
 	public List<ObjectIdentity> findChildren(ObjectIdentity parentIdentity) {
