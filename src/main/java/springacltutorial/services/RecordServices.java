@@ -1,10 +1,12 @@
 package springacltutorial.services;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import springacltutorial.model.Record;
@@ -13,27 +15,25 @@ import springacltutorial.model.User;
 @Service
 public class RecordServices {
 
-	Map<User, List<Record>> records = new HashMap<User, List<Record>>();
+	List<Record> records = new ArrayList<Record>();
 
+	@Secured({"RUN_AS_USER", "ROLE_MANAGER"})
 	public Long createRecord(User user, String name) {
-		List<Record> userRecords = records.get(user);
-		if (userRecords == null) {
-			userRecords = new ArrayList<Record>();
-		}
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		System.out.println("creating record with auth-'" + auth + "'");
 		Record newRecord = new Record(name);
-		userRecords.add(newRecord);
-		records.put(user, userRecords);
+		records.add(newRecord);
 		return newRecord.getId();
 	}
 
+	@Secured("RUN_AS_USER")
+	@PreAuthorize("hasAnyRole('ROLE_MANAGER', 'ROLE_EMPLOYEE')")
 	public Record getRecord(User user, Long id) {
-		List<Record> userRecords = records.get(user);
-		if (userRecords == null) {
-			return null;
-		}
-		Integer userRecordsLength = userRecords.size();
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		System.out.println("getting record for id-'" + id + "' with auth-'" + auth + "'");
+		Integer userRecordsLength = records.size();
 		for (int i = 0; i < userRecordsLength; i++) {
-			Record record = userRecords.get(i);
+			Record record = records.get(i);
 			if (record.getId() == id) {
 				return record;
 			}

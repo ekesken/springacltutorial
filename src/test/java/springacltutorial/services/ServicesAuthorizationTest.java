@@ -15,11 +15,16 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.GrantedAuthorityImpl;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import springacltutorial.dao.ReportsDao;
+import springacltutorial.model.Record;
 import springacltutorial.model.Report;
+import springacltutorial.model.User;
 
+@SuppressWarnings("deprecation")
 public class ServicesAuthorizationTest {
 
 	@Before
@@ -28,12 +33,15 @@ public class ServicesAuthorizationTest {
 		ApplicationContext context = new ClassPathXmlApplicationContext(
 				new String[] { "applicationContext-business.xml",
 						"applicationContext-security.xml" });
+		recordServices = (RecordServices) BeanFactoryUtils.beanOfType(context,
+				RecordServices.class);
 		reportServices = (ReportServices) BeanFactoryUtils.beanOfType(context,
 				ReportServices.class);
 		dao = (ReportsDao) BeanFactoryUtils.beanOfType(context,
 				ReportsDao.class);
 	}
 
+	RecordServices recordServices;
 	ReportServices reportServices;
 	ReportsDao dao;
 
@@ -89,10 +97,6 @@ public class ServicesAuthorizationTest {
 				new UsernamePasswordAuthenticationToken("manager2", "pass2"));
 		reportServices.acceptReport(reportEmpl3);
 		assertEquals(true, reportEmpl3.isAccepted());
-
-		Collection<Report> reports = reportServices.getReports();
-		assertNotNull(reports);
-		assertEquals(1, reports.size());
 	}
 
 	@Test
@@ -153,6 +157,31 @@ public class ServicesAuthorizationTest {
 		reportServices.updateReport(reportEmpl1); // verifies no exception is thrown
 		try {
 			reportServices.updateReport(reportEmpl3);
+			fail("access denied exception is expected");
+		} catch (Exception e) {
+			assertEquals(e.getClass(), AccessDeniedException.class);
+		}
+	}
+
+	@Test
+	public void testCreateGetRecord() {
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("consumer", "consumer"));
+		User manager1 = new User("manager1");
+		GrantedAuthority roleManager = new GrantedAuthorityImpl("ROLE_MANAGER");
+		manager1.getAuthorities().add(roleManager);
+		User user1 = new User("empl1");
+		GrantedAuthority roleEmployee = new GrantedAuthorityImpl("ROLE_EMPLOYEE");
+		user1.getAuthorities().add(roleEmployee);
+		Long id = recordServices.createRecord(manager1, "springacltutorial");
+		Record record = recordServices.getRecord(user1, id);
+		assertEquals(id, record.getId());
+		assertEquals("springacltutorial", record.getName());
+		record = recordServices.getRecord(user1, id);
+		assertEquals(id, record.getId());
+		assertEquals("springacltutorial", record.getName());
+		try {
+			recordServices.createRecord(user1, "springacltutorial");
 			fail("access denied exception is expected");
 		} catch (Exception e) {
 			assertEquals(e.getClass(), AccessDeniedException.class);

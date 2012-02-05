@@ -38,15 +38,6 @@
 		</security:authentication-provider>
 	</security:authentication-manager>
 
-<!--
-	<security:global-method-security
-		secured-annotations="enabled"
-		pre-post-annotations="enabled"
-		access-decision-manager-ref="businessAccessDecisionManager">
-		<security:expression-handler ref="methodExprHandler" />
-		<security:after-invocation-provider ref="postAdviceProvider"/>
-	</security:global-method-security>
- -->
 	<aop:config>
 		<aop:pointcut id="allServiceMethods" expression='execution(* springacltutorial.services.*Services.*(..))' />
 		<aop:advisor advice-ref="securedInterceptor" pointcut-ref="allServiceMethods" order="1"/>
@@ -67,6 +58,7 @@
 		<property name="accessDecisionManager" ref="businessAccessDecisionManager" />
 		<property name="authenticationManager" ref="authenticationManager" />
 		<property name="afterInvocationManager" ref="afterInvocationManager" />
+		<property name="runAsManager" ref="runAsManager" />
 	</bean>
 
 	<bean id="prePostInterceptor"
@@ -152,5 +144,14 @@
 
 	<bean class="org.springframework.security.acls.AclPermissionEvaluator" id="aclPermissionEvaluator">
 		<constructor-arg ref="aclService" />
+	</bean>
+
+	<bean id="runAsManager" class="springacltutorial.infrastructure.MyRunAsManagerImpl">
+		<property name="key" value="run_as_password" />
+	</bean>
+
+	<bean id="runAsAuthenticationProvider"
+		class="org.springframework.security.access.intercept.RunAsImplAuthenticationProvider">
+		<property name="key" value="run_as_password" />
 	</bean>
 </beans>
