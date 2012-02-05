@@ -9,7 +9,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import springacltutorial.dao.ReportsDao;
+import springacltutorial.model.Record;
 import springacltutorial.model.Report;
+import springacltutorial.model.User;
 
 import static org.junit.Assert.*;
 
@@ -19,12 +21,15 @@ public class ServicesTest {
 	public void setup() {
 		ApplicationContext context = new ClassPathXmlApplicationContext(
 				"applicationContext-business.xml");
+		recordServices = (RecordServices) BeanFactoryUtils.beanOfType(context,
+				RecordServices.class);
 		reportServices = (ReportServices) BeanFactoryUtils.beanOfType(context,
 				ReportServices.class);
 		dao = (ReportsDao) BeanFactoryUtils.beanOfType(context,
 				ReportsDao.class);
 	}
 
+	RecordServices recordServices;
 	ReportServices reportServices;
 	ReportsDao dao;
 
@@ -58,5 +63,14 @@ public class ServicesTest {
 		long id = reportServices.addReport("springacltutorial");
 		Report report = dao.getReportById(id);
 		reportServices.updateReport(report); // verifies no authorization exception is throwed
+	}
+
+	@Test
+	public void testCreateGetRecord() {
+		User user = new User("empl1");
+		Long id = recordServices.createRecord(user, "springacltutorial");
+		Record record = recordServices.getRecord(user, id);
+		assertEquals(id, record.getId());
+		assertEquals("springacltutorial", record.getName());
 	}
 }
