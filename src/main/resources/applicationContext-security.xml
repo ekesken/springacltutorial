@@ -2,15 +2,24 @@
 
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:security="http://www.springframework.org/schema/security"
-	xmlns:util="http://www.springframework.org/schema/util" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
-             http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
-             http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd">
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+             http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+             http://www.springframework.org/schema/util
+             http://www.springframework.org/schema/util/spring-util-3.1.xsd
+             http://www.springframework.org/schema/security
+             http://www.springframework.org/schema/security/spring-security-3.1.xsd
+             http://www.springframework.org/schema/aop
+             http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
 
-	<security:authentication-manager>
+	<security:authentication-manager id="authenticationManager">
 		<security:authentication-provider>
 			<security:password-encoder hash="plaintext" />
 			<security:user-service>
+				<security:user name="consumer" password="consumer"
+					authorities="ROLE_CONSUMER" />
 				<security:user name="empl1" password="pass1"
 					authorities="ROLE_EMPLOYEE" />
 				<security:user name="empl2" password="pass2"
@@ -29,12 +38,50 @@
 		</security:authentication-provider>
 	</security:authentication-manager>
 
+<!--
 	<security:global-method-security
 		secured-annotations="enabled"
 		pre-post-annotations="enabled"
 		access-decision-manager-ref="businessAccessDecisionManager">
 		<security:expression-handler ref="methodExprHandler" />
+		<security:after-invocation-provider ref="postAdviceProvider"/>
 	</security:global-method-security>
+ -->
+	<aop:config>
+		<aop:pointcut id="allServiceMethods" expression='execution(* springacltutorial.services.*Services.*(..))' />
+		<aop:advisor advice-ref="securedInterceptor" pointcut-ref="allServiceMethods" order="1"/>
+		<aop:advisor advice-ref="prePostInterceptor" pointcut-ref="allServiceMethods" order="2"/>
+	</aop:config>
+
+	<bean id="securedInterceptor"
+		class="springacltutorial.infrastructure.MyMethodSecurityInterceptor">
+		<property name="securityMetadataSource">
+			<bean
+				class="org.springframework.security.access.annotation.SecuredAnnotationSecurityMetadataSource">
+				<constructor-arg>
+					<bean class="org.springframework.security.access.annotation.SecuredAnnotationMetadataExtractor" />
+				</constructor-arg>
+			</bean>
+		</property>
+		<property name="validateConfigAttributes" value="false" />
+		<property name="accessDecisionManager" ref="businessAccessDecisionManager" />
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="afterInvocationManager" ref="afterInvocationManager" />
+	</bean>
+
+	<bean id="prePostInterceptor"
+		class="springacltutorial.infrastructure.MyMethodSecurityInterceptor">
+		<property name="securityMetadataSource">
+			<bean
+				class="org.springframework.security.access.prepost.PrePostAnnotationSecurityMetadataSource">
+				<constructor-arg ref="exprBasedAnnotationFactory" />
+			</bean>
+		</property>
+		<property name="validateConfigAttributes" value="false" />
+		<property name="accessDecisionManager" ref="businessAccessDecisionManager" />
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="afterInvocationManager" ref="afterInvocationManager" />
+	</bean>
 
 	<!-- Decision manager uses two voters: one is role-based, another is ACL-based -->
 	<bean id="businessAccessDecisionManager" class="org.springframework.security.access.vote.UnanimousBased">
@@ -42,16 +89,39 @@
 		<property name="decisionVoters">
 			<list>
 				<bean id="roleVoter" class="org.springframework.security.access.vote.RoleVoter" />
-				<bean id="preAuthorizeVoter" class="org.springframework.security.access.prepost.PreInvocationAuthorizationAdviceVoter">
-					<constructor-arg ref="preInvocationAuthorizationAdvice"/>
-				</bean>
+				<ref local="preAuthorizeVoter" />
 				<ref local="aclReportAcceptVoter" />
 			</list>
 		</property>
 	</bean>
 
+	<bean id="exprBasedAnnotationFactory"
+		class="org.springframework.security.access.expression.method.ExpressionBasedAnnotationAttributeFactory">
+		<constructor-arg ref="methodExprHandler"></constructor-arg>
+	</bean>
+
+	<bean id="preAuthorizeVoter" class="org.springframework.security.access.prepost.PreInvocationAuthorizationAdviceVoter">
+		<constructor-arg ref="preInvocationAuthorizationAdvice"/>
+	</bean>
+
 	<bean id="preInvocationAuthorizationAdvice"
 		class="org.springframework.security.access.expression.method.ExpressionBasedPreInvocationAdvice">
+	</bean>
+
+	<bean class="org.springframework.security.access.intercept.AfterInvocationProviderManager" id="afterInvocationManager">
+		<property name="providers">
+			<list>
+				<ref local="postAdviceProvider"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean class="org.springframework.security.access.prepost.PostInvocationAdviceProvider" id="postAdviceProvider">
+		<constructor-arg ref="exprPostInvocationAdvice" />
+	</bean>
+
+	<bean class="org.springframework.security.access.expression.method.ExpressionBasedPostInvocationAdvice" id="exprPostInvocationAdvice">
+		<constructor-arg ref="methodExprHandler" />
 	</bean>
 
 	<!-- An access decision voter that reads ACL_REPORT_ACCEPT configuration 
