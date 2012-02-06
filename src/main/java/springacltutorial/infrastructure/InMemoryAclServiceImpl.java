@@ -7,15 +7,17 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import org.aopalliance.intercept.MethodInvocation;
+import org.springframework.security.acls.domain.AccessControlEntryImpl;
+import org.springframework.security.acls.domain.BasePermission;
+import org.springframework.security.acls.domain.GrantedAuthoritySid;
+import org.springframework.security.acls.domain.ObjectIdentityImpl;
+import org.springframework.security.acls.domain.PrincipalSid;
 import org.springframework.security.acls.model.AccessControlEntry;
 import org.springframework.security.acls.model.Acl;
 import org.springframework.security.acls.model.AclService;
 import org.springframework.security.acls.model.NotFoundException;
-import org.springframework.security.acls.domain.AccessControlEntryImpl;
 import org.springframework.security.acls.model.ObjectIdentity;
-import org.springframework.security.acls.domain.BasePermission;
-import org.springframework.security.acls.domain.ObjectIdentityImpl;
-import org.springframework.security.acls.domain.PrincipalSid;
 import org.springframework.security.acls.model.Sid;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -42,7 +44,8 @@ public class InMemoryAclServiceImpl implements AclService {
 		ObjectIdentity user4 = new ObjectIdentityImpl(User.class, "empl4");
 		ObjectIdentity report1 = new ObjectIdentityImpl(Report.class, 1);
 		ObjectIdentity report2 = new ObjectIdentityImpl(Report.class, 2);
-
+		ObjectIdentity methodCreateRecord = new ObjectIdentityImpl(MethodInvocation.class, "public java.lang.Long springacltutorial.services.RecordServices.createRecord(springacltutorial.model.User,java.lang.String)");
+		ObjectIdentity methodGetRecord = new ObjectIdentityImpl(MethodInvocation.class, "public springacltutorial.model.Record springacltutorial.services.RecordServices.getRecord(springacltutorial.model.User,java.lang.Long)");
 		Acl acl1 = new SimpleAclImpl(user1, new ArrayList<AccessControlEntry>());
 		acl1.getEntries().add(
 				new AccessControlEntryImpl("ace1", acl1, new PrincipalSid(
@@ -79,6 +82,13 @@ public class InMemoryAclServiceImpl implements AclService {
 						"manager2"), BasePermission.READ, true, true,
 						true));
 		acls.put(acl6.getObjectIdentity(), acl6);
+		Acl acl7 = new SimpleAclImpl(methodCreateRecord, new ArrayList<AccessControlEntry>());
+		acl7.getEntries().add( new AccessControlEntryImpl("ace7", acl7, new GrantedAuthoritySid("ROLE_MANAGER"), BasePermission.READ, true, true, true));
+ 		acls.put(acl7.getObjectIdentity(), acl7);
+		Acl acl8 = new SimpleAclImpl(methodGetRecord, new ArrayList<AccessControlEntry>());
+		acl8.getEntries().add(new AccessControlEntryImpl("ace8", acl8, new GrantedAuthoritySid("ROLE_MANAGER"), BasePermission.READ, true, true, true));
+		acl8.getEntries().add(new AccessControlEntryImpl("ace8", acl8, new GrantedAuthoritySid("ROLE_EMPLOYEE"), BasePermission.READ, true, true, true));
+		acls.put(acl8.getObjectIdentity(), acl8);
 	}
 
 	public List<ObjectIdentity> findChildren(ObjectIdentity parentIdentity) {

@@ -42,6 +42,7 @@
 		<aop:pointcut id="allServiceMethods" expression='execution(* springacltutorial.services.*Services.*(..))' />
 		<aop:advisor advice-ref="securedInterceptor" pointcut-ref="allServiceMethods" order="1"/>
 		<aop:advisor advice-ref="prePostInterceptor" pointcut-ref="allServiceMethods" order="2"/>
+		<aop:advisor advice-ref="userAccessInterceptor" pointcut-ref="allServiceMethods" order="3"/>
 	</aop:config>
 
 	<bean id="securedInterceptor"
@@ -154,4 +155,46 @@
 		class="org.springframework.security.access.intercept.RunAsImplAuthenticationProvider">
 		<property name="key" value="run_as_password" />
 	</bean>
+
+	<!-- USER AUTHORIZATION -->
+	<bean id="aclUserVoter" class="springacltutorial.infrastructure.UserAclEntryVoter">
+		<constructor-arg ref="aclService" />
+		<constructor-arg value="IS_USER_CAPABLE" />
+		<constructor-arg>
+			<list>
+				<util:constant id="acceptPermission"
+					static-field="org.springframework.security.acls.domain.BasePermission.READ" />
+			</list>
+		</constructor-arg>
+		<property name="objectIdentityRetrievalStrategy">
+			<bean class="springacltutorial.infrastructure.MethodRetrievalStrategy" />
+		</property>
+	</bean>
+
+	<bean id="userAccessDecisionManager" class="org.springframework.security.access.vote.UnanimousBased">
+		<property name="allowIfAllAbstainDecisions" value="true" />
+		<property name="decisionVoters">
+			<list>
+				<ref local="aclUserVoter" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="userAccessInterceptor"
+		class="springacltutorial.infrastructure.MyMethodSecurityInterceptor">
+		<property name="securityMetadataSource">
+			<bean
+				class="org.springframework.security.access.annotation.SecuredAnnotationSecurityMetadataSource">
+				<constructor-arg>
+					<bean class="org.springframework.security.access.annotation.SecuredAnnotationMetadataExtractor" />
+				</constructor-arg>
+			</bean>
+		</property>
+		<property name="validateConfigAttributes" value="false" />
+		<property name="accessDecisionManager" ref="userAccessDecisionManager" />
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="afterInvocationManager" ref="afterInvocationManager" />
+		<property name="runAsManager" ref="runAsManager" />
+	</bean>
+	<!-- END OF USER AUTHORIZATION -->
 </beans>

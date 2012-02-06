@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -17,7 +16,7 @@ public class RecordServices {
 
 	List<Record> records = new ArrayList<Record>();
 
-	@Secured({"RUN_AS_USER", "ROLE_MANAGER"})
+	@Secured({"RUN_AS_USER", "IS_USER_CAPABLE"})
 	public Long createRecord(User user, String name) {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		System.out.println("creating record with auth-'" + auth + "'");
@@ -26,8 +25,7 @@ public class RecordServices {
 		return newRecord.getId();
 	}
 
-	@Secured("RUN_AS_USER")
-	@PreAuthorize("hasAnyRole('ROLE_MANAGER', 'ROLE_EMPLOYEE')")
+	@Secured({"RUN_AS_USER", "IS_USER_CAPABLE"})
 	public Record getRecord(User user, Long id) {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		System.out.println("getting record for id-'" + id + "' with auth-'" + auth + "'");
