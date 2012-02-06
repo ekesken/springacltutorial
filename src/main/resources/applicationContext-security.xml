@@ -20,6 +20,8 @@
 			<security:user-service>
 				<security:user name="consumer" password="consumer"
 					authorities="ROLE_CONSUMER" />
+				<security:user name="consumer2" password="consumer2"
+					authorities="ROLE_CONSUMER" />
 				<security:user name="empl1" password="pass1"
 					authorities="ROLE_EMPLOYEE" />
 				<security:user name="empl2" password="pass2"
@@ -42,7 +44,8 @@
 		<aop:pointcut id="allServiceMethods" expression='execution(* springacltutorial.services.*Services.*(..))' />
 		<aop:advisor advice-ref="securedInterceptor" pointcut-ref="allServiceMethods" order="1"/>
 		<aop:advisor advice-ref="prePostInterceptor" pointcut-ref="allServiceMethods" order="2"/>
-		<aop:advisor advice-ref="userAccessInterceptor" pointcut-ref="allServiceMethods" order="3"/>
+		<aop:advisor advice-ref="consumerAccessInterceptor" pointcut-ref="allServiceMethods" order="3" />
+		<aop:advisor advice-ref="userAccessInterceptor" pointcut-ref="allServiceMethods" order="4" />
 	</aop:config>
 
 	<bean id="securedInterceptor"
@@ -59,7 +62,6 @@
 		<property name="accessDecisionManager" ref="businessAccessDecisionManager" />
 		<property name="authenticationManager" ref="authenticationManager" />
 		<property name="afterInvocationManager" ref="afterInvocationManager" />
-		<property name="runAsManager" ref="runAsManager" />
 	</bean>
 
 	<bean id="prePostInterceptor"
@@ -157,7 +159,7 @@
 	</bean>
 
 	<!-- USER AUTHORIZATION -->
-	<bean id="aclUserVoter" class="springacltutorial.infrastructure.UserAclEntryVoter">
+	<bean id="aclUserVoter" class="springacltutorial.infrastructure.MethodAclEntryVoter">
 		<constructor-arg ref="aclService" />
 		<constructor-arg value="IS_USER_CAPABLE" />
 		<constructor-arg>
@@ -197,4 +199,45 @@
 		<property name="runAsManager" ref="runAsManager" />
 	</bean>
 	<!-- END OF USER AUTHORIZATION -->
+
+	<!-- CONSUMER AUTHORIZATION -->
+	<bean id="aclConsumerVoter" class="springacltutorial.infrastructure.MethodAclEntryVoter">
+		<constructor-arg ref="aclService" />
+		<constructor-arg value="IS_CONSUMER_CAPABLE" />
+		<constructor-arg>
+			<list>
+				<util:constant id="acceptPermission"
+					static-field="org.springframework.security.acls.domain.BasePermission.READ" />
+			</list>
+		</constructor-arg>
+		<property name="objectIdentityRetrievalStrategy">
+			<bean class="springacltutorial.infrastructure.MethodRetrievalStrategy" />
+		</property>
+	</bean>
+
+	<bean id="consumerAccessDecisionManager" class="org.springframework.security.access.vote.UnanimousBased">
+		<property name="allowIfAllAbstainDecisions" value="true" />
+		<property name="decisionVoters">
+			<list>
+				<ref local="aclConsumerVoter" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="consumerAccessInterceptor"
+		class="springacltutorial.infrastructure.MyMethodSecurityInterceptor">
+		<property name="securityMetadataSource">
+			<bean
+				class="org.springframework.security.access.annotation.SecuredAnnotationSecurityMetadataSource">
+				<constructor-arg>
+					<bean class="org.springframework.security.access.annotation.SecuredAnnotationMetadataExtractor" />
+				</constructor-arg>
+			</bean>
+		</property>
+		<property name="validateConfigAttributes" value="false" />
+		<property name="accessDecisionManager" ref="consumerAccessDecisionManager" />
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="afterInvocationManager" ref="afterInvocationManager" />
+	</bean>
+	<!-- END OF CONSUMER AUTHORIZATION -->
 </beans>

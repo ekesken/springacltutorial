@@ -185,5 +185,13 @@ public class ServicesAuthorizationTest {
 		} catch (Exception e) {
 			assertEquals(e.getClass(), AccessDeniedException.class);
 		}
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("consumer2", "consumer2"));
+		try {
+			recordServices.createRecord(manager1, "springacltutorial");
+			fail("access denied exception is expected");
+		} catch (Exception e) {
+			assertEquals(e.getClass(), AccessDeniedException.class);
+		}
 	}
 }

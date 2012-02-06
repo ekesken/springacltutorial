@@ -15,6 +15,9 @@ public class MyRunAsManagerImpl extends RunAsManagerImpl {
 	@Override
 	public Authentication buildRunAs(Authentication authentication,
 			Object object, Collection<ConfigAttribute> attributes) {
+		if (this.getKey() == null) {
+			return null;
+		}
 		boolean isSupported = false;
 		for (ConfigAttribute attribute : attributes) {
 			if (this.supports(attribute)) {

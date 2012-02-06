@@ -16,7 +16,7 @@ public class RecordServices {
 
 	List<Record> records = new ArrayList<Record>();
 
-	@Secured({"RUN_AS_USER", "IS_USER_CAPABLE"})
+	@Secured({"RUN_AS_USER", "IS_CONSUMER_CAPABLE", "IS_USER_CAPABLE"})
 	public Long createRecord(User user, String name) {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		System.out.println("creating record with auth-'" + auth + "'");
@@ -25,7 +25,7 @@ public class RecordServices {
 		return newRecord.getId();
 	}
 
-	@Secured({"RUN_AS_USER", "IS_USER_CAPABLE"})
+	@Secured({"RUN_AS_USER", "IS_CONSUMER_CAPABLE", "IS_USER_CAPABLE"})
 	public Record getRecord(User user, Long id) {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		System.out.println("getting record for id-'" + id + "' with auth-'" + auth + "'");
