@@ -23,11 +23,17 @@ public class SimpleAclImpl implements Acl {
 	private static final long serialVersionUID = 1L;
 	private ObjectIdentity oi;
 	private List<AccessControlEntry> aces;
+	private Acl parentAcl;
 	private transient AuditLogger auditLogger = new ConsoleAuditLogger();
 
 	public SimpleAclImpl(ObjectIdentity oi, List<AccessControlEntry> aces) {
 		this.oi = oi;
 		this.aces = aces;
+	}
+
+	public SimpleAclImpl(ObjectIdentity oi, List<AccessControlEntry> aces, Acl parentAcl) {
+		this(oi, aces);
+		this.parentAcl = parentAcl;
 	}
 
 	public ObjectIdentity getObjectIdentity() {
@@ -39,10 +45,13 @@ public class SimpleAclImpl implements Acl {
 	}
 
 	public Acl getParentAcl() {
-		return null; // we don't use inheritance
+		return parentAcl;
 	}
 
 	public boolean isEntriesInheriting() {
+		if (parentAcl != null) {
+			return true;
+		}
 		return false; // we don't use inheritance
 	}
 
@@ -104,8 +113,15 @@ public class SimpleAclImpl implements Acl {
 			return false;
 		}
 
-		throw new NotFoundException(
-				"Unable to locate a matching ACE for passed permissions and SIDs");
+		// No matches have been found so far
+		if (this.isEntriesInheriting() && (this.getParentAcl() != null)) {
+			// We have a parent, so let them try to find a matching ACE
+			return this.getParentAcl().isGranted(permission, sids, false);
+		} else {
+			// We either have no parent, or we're the uppermost parent
+			throw new NotFoundException(
+					"Unable to locate a matching ACE for passed permissions and SIDs");
+		}
 	}
 
 	@Override

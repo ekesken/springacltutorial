@@ -166,38 +166,45 @@ public class ServicesAuthorizationTest {
 
 	@Test
 	public void testCreateGetRecord() {
-		SecurityContextHolder.getContext().setAuthentication(
-				new UsernamePasswordAuthenticationToken("consumer", "consumer"));
+		GrantedAuthority roleAdmin = new GrantedAuthorityImpl("ROLE_ADMIN");
 		GrantedAuthority roleManager = new GrantedAuthorityImpl("ROLE_MANAGER");
 		GrantedAuthority roleEmployee = new GrantedAuthorityImpl("ROLE_EMPLOYEE");
+		User admin = new User("admin");
+		admin.getAuthorities().add(roleAdmin);
 		User manager1 = new User("manager1");
 		manager1.getAuthorities().add(roleManager);
 		User manager2 = new User("manager2");
 		manager2.getAuthorities().add(roleManager);
 		User user1 = new User("empl1");
 		user1.getAuthorities().add(roleEmployee);
+		// CONSUMER1 TESTS
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken("consumer", "consumer"));
+		// MANAGER1 USER TESTS
 		Long id = recordServices.createRecord(manager1, "springacltutorial");
-		Record record = recordServices.getRecord(user1, id);
-		assertEquals(id, record.getId());
-		assertEquals("springacltutorial", record.getName());
-		record = recordServices.getRecord(user1, id);
-		assertEquals(id, record.getId());
-		assertEquals("springacltutorial", record.getName());
-		id = recordServices.createRecord(manager2, "springacltutorial");
-		record = recordServices.getRecord(user1, id);
-		assertEquals(id, record.getId());
-		assertEquals("springacltutorial", record.getName());
-		record = recordServices.getRecord(user1, id);
+		Record record = recordServices.getRecord(manager1, id);
 		assertEquals(id, record.getId());
 		assertEquals("springacltutorial", record.getName());
 		Collection<Record> records = recordServices.getRecords(manager1);
 		assertNotNull(records);
 		assertEquals(1, records.size());
 		assertEquals(1L, (long) records.iterator().next().getId());
+		// MANAGER2 USER TESTS
+		id = recordServices.createRecord(manager2, "springacltutorial");
+		record = recordServices.getRecord(manager2, id);
+		assertEquals(id, record.getId());
+		assertEquals("springacltutorial", record.getName());
 		records = recordServices.getRecords(manager2);
 		assertNotNull(records);
 		assertEquals(1, records.size());
 		assertEquals(2L, (long) records.iterator().next().getId());
+		// USER1 USER TESTS
+		record = recordServices.getRecord(user1, 1L);
+		assertEquals(1L, (long) record.getId());
+		assertEquals("springacltutorial", record.getName());
+		record = recordServices.getRecord(user1, 2L);
+		assertEquals(2L,(long) record.getId());
+		assertEquals("springacltutorial", record.getName());
 		records = recordServices.getRecords(user1);
 		assertNotNull(records);
 		assertEquals(0, records.size());
@@ -207,6 +214,15 @@ public class ServicesAuthorizationTest {
 		} catch (Exception e) {
 			assertEquals(e.getClass(), AccessDeniedException.class);
 		}
+		// ADMIN USER TESTS
+		id = recordServices.createRecord(admin, "springacltutorial");
+		record = recordServices.getRecord(admin, id);
+		assertEquals(id, record.getId());
+		assertEquals("springacltutorial", record.getName());
+		records = recordServices.getRecords(user1);
+		assertNotNull(records);
+		assertEquals(0, records.size());
+		// CONSUMER2 TESTS
 		SecurityContextHolder.getContext().setAuthentication(
 				new UsernamePasswordAuthenticationToken("consumer2", "consumer2"));
 		try {

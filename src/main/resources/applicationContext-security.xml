@@ -22,6 +22,8 @@
 					authorities="ROLE_CONSUMER" />
 				<security:user name="consumer2" password="consumer2"
 					authorities="ROLE_CONSUMER" />
+				<security:user name="admin" password="admin"
+					authorities="ROLE_ADMIN" />
 				<security:user name="empl1" password="pass1"
 					authorities="ROLE_EMPLOYEE" />
 				<security:user name="empl2" password="pass2"

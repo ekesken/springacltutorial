@@ -47,6 +47,7 @@ public class InMemoryAclServiceImpl implements AclService {
 		ObjectIdentity report2 = new ObjectIdentityImpl(Report.class, 2);
 		ObjectIdentity record1 = new ObjectIdentityImpl(Record.class, 1);
 		ObjectIdentity record2 = new ObjectIdentityImpl(Record.class, 2);
+		ObjectIdentity classRecordServices = new ObjectIdentityImpl(Class.class, "class springacltutorial.services.RecordServices");
 		ObjectIdentity methodCreateRecord = new ObjectIdentityImpl(MethodInvocation.class, "public java.lang.Long springacltutorial.services.RecordServices.createRecord(springacltutorial.model.User,java.lang.String)");
 		ObjectIdentity methodGetRecord = new ObjectIdentityImpl(MethodInvocation.class, "public springacltutorial.model.Record springacltutorial.services.RecordServices.getRecord(springacltutorial.model.User,java.lang.Long)");
 		ObjectIdentity methodGetRecords = new ObjectIdentityImpl(MethodInvocation.class, "public java.util.Collection springacltutorial.services.RecordServices.getRecords(springacltutorial.model.User)");
@@ -86,16 +87,19 @@ public class InMemoryAclServiceImpl implements AclService {
 						"manager2"), BasePermission.READ, true, true,
 						true));
 		acls.put(acl6.getObjectIdentity(), acl6);
-		Acl acl7 = new SimpleAclImpl(methodCreateRecord, new ArrayList<AccessControlEntry>());
+		Acl acl12 = new SimpleAclImpl(classRecordServices, new ArrayList<AccessControlEntry>());
+		acl12.getEntries().add( new AccessControlEntryImpl("ace12", acl12, new GrantedAuthoritySid("ROLE_ADMIN"), BasePermission.READ, true, true, true));
+		acls.put(acl12.getObjectIdentity(), acl12);
+		Acl acl7 = new SimpleAclImpl(methodCreateRecord, new ArrayList<AccessControlEntry>(), acl12);
 		acl7.getEntries().add( new AccessControlEntryImpl("ace7", acl7, new GrantedAuthoritySid("ROLE_MANAGER"), BasePermission.READ, true, true, true));
 		acl7.getEntries().add( new AccessControlEntryImpl("ace7", acl7, new PrincipalSid("consumer"), BasePermission.READ, true, true, true));
 		acls.put(acl7.getObjectIdentity(), acl7);
-		Acl acl8 = new SimpleAclImpl(methodGetRecord, new ArrayList<AccessControlEntry>());
+		Acl acl8 = new SimpleAclImpl(methodGetRecord, new ArrayList<AccessControlEntry>(), acl12);
 		acl8.getEntries().add(new AccessControlEntryImpl("ace8", acl8, new GrantedAuthoritySid("ROLE_MANAGER"), BasePermission.READ, true, true, true));
 		acl8.getEntries().add(new AccessControlEntryImpl("ace8", acl8, new GrantedAuthoritySid("ROLE_EMPLOYEE"), BasePermission.READ, true, true, true));
 		acl8.getEntries().add(new AccessControlEntryImpl("ace8", acl8, new PrincipalSid("consumer"), BasePermission.READ, true, true, true));
 		acls.put(acl8.getObjectIdentity(), acl8);
-		Acl acl9 = new SimpleAclImpl(methodGetRecords, new ArrayList<AccessControlEntry>());
+		Acl acl9 = new SimpleAclImpl(methodGetRecords, new ArrayList<AccessControlEntry>(), acl12);
 		acl9.getEntries().add(new AccessControlEntryImpl("ace9", acl9, new GrantedAuthoritySid("ROLE_MANAGER"), BasePermission.READ, true, true, true));
 		acl9.getEntries().add(new AccessControlEntryImpl("ace9", acl9, new GrantedAuthoritySid("ROLE_EMPLOYEE"), BasePermission.READ, true, true, true));
 		acl9.getEntries().add(new AccessControlEntryImpl("ace9", acl8, new PrincipalSid("consumer"), BasePermission.READ, true, true, true));
