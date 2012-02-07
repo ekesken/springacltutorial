@@ -2,7 +2,7 @@ package springacltutorial.model;
 
 public class Record {
 
-	private static Long SEQUENCE = 0L;
+	public static Long SEQUENCE = 0L;
 
 	public Record(String name) {
 		super();

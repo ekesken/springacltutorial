@@ -42,10 +42,13 @@
 
 	<aop:config>
 		<aop:pointcut id="allServiceMethods" expression='execution(* springacltutorial.services.*Services.*(..))' />
-		<aop:advisor advice-ref="securedInterceptor" pointcut-ref="allServiceMethods" order="1"/>
-		<aop:advisor advice-ref="prePostInterceptor" pointcut-ref="allServiceMethods" order="2"/>
-		<aop:advisor advice-ref="consumerAccessInterceptor" pointcut-ref="allServiceMethods" order="3" />
-		<aop:advisor advice-ref="userAccessInterceptor" pointcut-ref="allServiceMethods" order="4" />
+		<aop:pointcut id="reportServiceMethods" expression='execution(* springacltutorial.services.ReportServices.*(..))' />
+		<aop:pointcut id="recordServiceMethods" expression='execution(* springacltutorial.services.RecordServices.*(..))' />
+		<aop:advisor advice-ref="securedInterceptor" pointcut-ref="reportServiceMethods" order="1"/>
+		<aop:advisor advice-ref="prePostInterceptor" pointcut-ref="reportServiceMethods" order="2"/>
+		<aop:advisor advice-ref="consumerAccessInterceptor" pointcut-ref="recordServiceMethods" order="1" />
+		<aop:advisor advice-ref="userAccessInterceptor" pointcut-ref="recordServiceMethods" order="2" />
+		<aop:advisor advice-ref="userPrePostInterceptor" pointcut-ref="recordServiceMethods" order="3"/>
 	</aop:config>
 
 	<bean id="securedInterceptor"
@@ -195,6 +198,20 @@
 		<property name="validateConfigAttributes" value="false" />
 		<property name="accessDecisionManager" ref="userAccessDecisionManager" />
 		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="runAsManager" ref="runAsManager" />
+	</bean>
+
+	<bean id="userPrePostInterceptor"
+		class="springacltutorial.infrastructure.MyMethodSecurityInterceptor">
+		<property name="securityMetadataSource">
+			<bean
+				class="org.springframework.security.access.prepost.PrePostAnnotationSecurityMetadataSource">
+				<constructor-arg ref="exprBasedAnnotationFactory" />
+			</bean>
+		</property>
+		<property name="validateConfigAttributes" value="false" />
+		<property name="accessDecisionManager" ref="userAccessDecisionManager" />
+		<property name="authenticationManager" ref="authenticationManager" />
 		<property name="afterInvocationManager" ref="afterInvocationManager" />
 		<property name="runAsManager" ref="runAsManager" />
 	</bean>
@@ -237,7 +254,6 @@
 		<property name="validateConfigAttributes" value="false" />
 		<property name="accessDecisionManager" ref="consumerAccessDecisionManager" />
 		<property name="authenticationManager" ref="authenticationManager" />
-		<property name="afterInvocationManager" ref="afterInvocationManager" />
 	</bean>
 	<!-- END OF CONSUMER AUTHORIZATION -->
 </beans>

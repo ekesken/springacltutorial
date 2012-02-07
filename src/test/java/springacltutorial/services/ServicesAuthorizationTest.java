@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.junit.Before;
@@ -38,6 +39,7 @@ public class ServicesAuthorizationTest {
 				ReportServices.class);
 		dao = (ReportsDao) BeanFactoryUtils.beanOfType(context,
 				ReportsDao.class);
+		Record.SEQUENCE = 0L;
 	}
 
 	RecordServices recordServices;
@@ -166,11 +168,13 @@ public class ServicesAuthorizationTest {
 	public void testCreateGetRecord() {
 		SecurityContextHolder.getContext().setAuthentication(
 				new UsernamePasswordAuthenticationToken("consumer", "consumer"));
-		User manager1 = new User("manager1");
 		GrantedAuthority roleManager = new GrantedAuthorityImpl("ROLE_MANAGER");
-		manager1.getAuthorities().add(roleManager);
-		User user1 = new User("empl1");
 		GrantedAuthority roleEmployee = new GrantedAuthorityImpl("ROLE_EMPLOYEE");
+		User manager1 = new User("manager1");
+		manager1.getAuthorities().add(roleManager);
+		User manager2 = new User("manager2");
+		manager2.getAuthorities().add(roleManager);
+		User user1 = new User("empl1");
 		user1.getAuthorities().add(roleEmployee);
 		Long id = recordServices.createRecord(manager1, "springacltutorial");
 		Record record = recordServices.getRecord(user1, id);
@@ -179,6 +183,24 @@ public class ServicesAuthorizationTest {
 		record = recordServices.getRecord(user1, id);
 		assertEquals(id, record.getId());
 		assertEquals("springacltutorial", record.getName());
+		id = recordServices.createRecord(manager2, "springacltutorial");
+		record = recordServices.getRecord(user1, id);
+		assertEquals(id, record.getId());
+		assertEquals("springacltutorial", record.getName());
+		record = recordServices.getRecord(user1, id);
+		assertEquals(id, record.getId());
+		assertEquals("springacltutorial", record.getName());
+		Collection<Record> records = recordServices.getRecords(manager1);
+		assertNotNull(records);
+		assertEquals(1, records.size());
+		assertEquals(1L, (long) records.iterator().next().getId());
+		records = recordServices.getRecords(manager2);
+		assertNotNull(records);
+		assertEquals(1, records.size());
+		assertEquals(2L, (long) records.iterator().next().getId());
+		records = recordServices.getRecords(user1);
+		assertNotNull(records);
+		assertEquals(0, records.size());
 		try {
 			recordServices.createRecord(user1, "springacltutorial");
 			fail("access denied exception is expected");
